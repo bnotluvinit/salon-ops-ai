@@ -1,14 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: light dark;
-  background-color: #f9fafb; /* Light gray background for dashboard feel */
-  color: #111827;
+
+  color-scheme: dark;
+  background-color: #0f172a;
+  /* Slate 900 - Rich Dark */
+  color: #f1f5f9;
+  /* Slate 100 */
 }
 
 body {
