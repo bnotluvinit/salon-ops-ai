@@ -20,6 +20,7 @@ export const ForecastDashboard: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
+        if (parseFloat(value) < 0) return;
         setInputs(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
     };
 
@@ -39,12 +40,12 @@ export const ForecastDashboard: React.FC = () => {
         <div className="space-y-6">
             <Card title="Operational Assumptions">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Input label="Haircuts / Day (Total)" name="haircuts_per_day" type="number" value={inputs.haircuts_per_day} onChange={handleChange} />
-                    <Input label="Avg Price / Cut ($)" name="price_per_cut" type="number" value={inputs.price_per_cut} onChange={handleChange} />
-                    <Input label="Days Open / Month" name="operating_days_per_month" type="number" value={inputs.operating_days_per_month} onChange={handleChange} />
-                    <Input label="Number of Stylists" name="num_stylists" type="number" value={inputs.num_stylists} onChange={handleChange} />
-                    <Input label="Stylist Hours / Day" name="stylist_hours_per_day" type="number" value={inputs.stylist_hours_per_day} onChange={handleChange} />
-                    <Input label="Stylist Hourly Rate ($)" name="stylist_hourly_rate" type="number" value={inputs.stylist_hourly_rate} onChange={handleChange} />
+                    <Input label="Haircuts / Day (Total)" name="haircuts_per_day" type="number" min={0} value={inputs.haircuts_per_day} onChange={handleChange} />
+                    <Input label="Avg Price / Cut ($)" name="price_per_cut" type="number" min={0} value={inputs.price_per_cut} onChange={handleChange} />
+                    <Input label="Days Open / Month" name="operating_days_per_month" type="number" min={0} value={inputs.operating_days_per_month} onChange={handleChange} />
+                    <Input label="Number of Stylists" name="num_stylists" type="number" min={0} value={inputs.num_stylists} onChange={handleChange} />
+                    <Input label="Stylist Hours / Day" name="stylist_hours_per_day" type="number" min={0} value={inputs.stylist_hours_per_day} onChange={handleChange} />
+                    <Input label="Stylist Hourly Rate ($)" name="stylist_hourly_rate" type="number" min={0} value={inputs.stylist_hourly_rate} onChange={handleChange} />
                 </div>
                 <div className="mt-4">
                     <Button onClick={handleCalculate} disabled={loading} className="w-full md:w-auto">
