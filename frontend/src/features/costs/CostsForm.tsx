@@ -33,6 +33,7 @@ export const CostsForm: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
+        if (parseFloat(value) < 0) return;
         setCosts(prev => ({ ...prev, [name]: value }));
     };
 
@@ -59,6 +60,7 @@ export const CostsForm: React.FC = () => {
                         label="Rent ($)"
                         name="rent"
                         type="number"
+                        min={0}
                         value={costs.rent}
                         onChange={handleChange}
                     />
@@ -66,6 +68,7 @@ export const CostsForm: React.FC = () => {
                         label="Insurance ($)"
                         name="insurance"
                         type="number"
+                        min={0}
                         value={costs.insurance}
                         onChange={handleChange}
                     />
@@ -73,6 +76,7 @@ export const CostsForm: React.FC = () => {
                         label="Utilities ($)"
                         name="utilities"
                         type="number"
+                        min={0}
                         value={costs.utilities}
                         onChange={handleChange}
                     />
@@ -80,6 +84,7 @@ export const CostsForm: React.FC = () => {
                         label="Software ($)"
                         name="software"
                         type="number"
+                        min={0}
                         value={costs.software}
                         onChange={handleChange}
                     />
@@ -87,6 +92,7 @@ export const CostsForm: React.FC = () => {
                         label="Debt Service ($)"
                         name="debt_service"
                         type="number"
+                        min={0}
                         value={costs.debt_service}
                         onChange={handleChange}
                     />
@@ -94,6 +100,7 @@ export const CostsForm: React.FC = () => {
                         label="Other ($)"
                         name="other"
                         type="number"
+                        min={0}
                         value={costs.other}
                         onChange={handleChange}
                     />
