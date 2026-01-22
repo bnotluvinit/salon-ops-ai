@@ -4,6 +4,8 @@ import type { OperationalInputs, FinancialSnapshot } from '../../types';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import CostBreakdownPie from './charts/CostBreakdownPie';
+import ProfitLossSankey from './charts/ProfitLossSankey';
 
 export const ForecastDashboard: React.FC = () => {
     const [inputs, setInputs] = useState<OperationalInputs>({
@@ -84,6 +86,17 @@ export const ForecastDashboard: React.FC = () => {
                                 )}
                             </div>
                         </div>
+                    </Card>
+                </div>
+            )}
+
+            {snapshot && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+                    <Card title="Monthly Cost Breakdown">
+                        <CostBreakdownPie snapshot={snapshot} />
+                    </Card>
+                    <Card title="Cash Flow (Sankey)">
+                        <ProfitLossSankey snapshot={snapshot} />
                     </Card>
                 </div>
             )}

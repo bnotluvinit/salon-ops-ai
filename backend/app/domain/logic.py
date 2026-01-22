@@ -59,6 +59,7 @@ def calculate_forecast(inputs: OperationalInputs, costs: FixedCosts) -> Financia
         daily_labor_cost=_round(daily_labor_cost),
         monthly_labor_cost=_round(monthly_labor_cost),
         total_monthly_fixed_costs=_round(total_fixed_costs),
+        fixed_costs=costs,
         total_monthly_costs=_round(total_monthly_costs),
         gross_margin=_round(gross_margin),
         net_profit=_round(net_profit),
