@@ -4,67 +4,87 @@ from app.domain.models import OperationalInputs, FixedCosts, FinancialSnapshot, 
 def calculate_forecast(inputs: OperationalInputs, costs: FixedCosts) -> FinancialSnapshot:
     """
     Pure domain function to calculate financial snapshot from inputs and costs.
+    Aligned with the "Pigtails & Crewcuts" spreadsheet logic.
     """
     
     # --- Revenue Calculations ---
-    # Daily Revenue = Cuts/Day * Price * Num Stylists? 
-    # Or is 'haircuts_per_day' aggregate for the shop? 
-    # Assumption: 'haircuts_per_day' is TOTAL for the shop based on the prompt "volume, staffing".
-    # However, user prompt said "stylist_hours_per_day".
-    # Let's assume 'haircuts_per_day' is TOTAL volume. 
-    # Let's assume 'stylist_hours_per_day' is TOTAL hours paid daily across all staff 
-    # (or we multiply by num_stylists if the input implies per stylist).
+    service_revenue = inputs.haircuts_per_day * inputs.price_per_cut * inputs.operating_days_per_month
+    retail_revenue = inputs.retail_sales
+    party_revenue = inputs.party_sales
+    total_revenue = service_revenue + retail_revenue + party_revenue
     
-    # Clarification from prompt: "stylist_hours_per_day" and "stylist_hourly_rate".
-    # I added 'num_stylists' to inputs to be safe, but if inputs are "per day" aggregates, we use them directly.
-    # Let's treat inputs as "Shop Totals" for simplicity unless 'num_stylists' > 1 is strictly used.
-    # Actually, to make it robust:
-    # Daily Labor = inputs.num_stylists * inputs.stylist_hours_per_day * inputs.stylist_hourly_rate
-    # Daily Revenue = inputs.haircuts_per_day * inputs.price_per_cut
+    # --- Cost of Sales (COGS) ---
+    # Labor includes tax as per spreadsheet
+    base_labor = inputs.num_stylists * inputs.stylist_hours_per_day * inputs.stylist_hourly_rate * inputs.operating_days_per_month
+    labor_tax = base_labor * inputs.stylist_payroll_tax_pct
+    total_labor = base_labor + labor_tax
     
-    daily_revenue = inputs.haircuts_per_day * inputs.price_per_cut
-    monthly_revenue = daily_revenue * inputs.operating_days_per_month
+    retail_cogs = retail_revenue * inputs.retail_cogs_pct
+    party_cogs = party_revenue * inputs.party_cogs_pct
+    total_cogs = total_labor + retail_cogs + party_cogs
     
-    # Labor Costs
-    # Assumption: stylist_hours_per_day is PER STYLIST.
-    daily_labor_cost = inputs.num_stylists * inputs.stylist_hours_per_day * inputs.stylist_hourly_rate
-    monthly_labor_cost = daily_labor_cost * inputs.operating_days_per_month
+    # --- Gross Profit ---
+    gross_profit = total_revenue - total_cogs
     
-    # Total Costs
+    # --- Variable Expenses (Calculated from Total Sales) ---
+    royalties = total_revenue * inputs.royalties_pct
+    cc_fees = total_revenue * inputs.cc_fees_pct
+    ad_fund = total_revenue * inputs.ad_fund_pct
+    total_var_expenses = royalties + cc_fees + ad_fund
+    
+    # --- Fixed Expenses ---
     total_fixed_costs = costs.total_monthly_fixed_costs
-    total_monthly_costs = monthly_labor_cost + total_fixed_costs
     
-    # Profitability
-    gross_margin = monthly_revenue - monthly_labor_cost
-    net_profit = monthly_revenue - total_monthly_costs
+    # --- Net Profit / Cash Flow ---
+    net_profit = gross_profit - total_var_expenses - total_fixed_costs
     
-    # Metrics
-    if monthly_revenue > 0:
-        labor_pct = float(monthly_labor_cost / monthly_revenue)
-        net_margin_pct = float(net_profit / monthly_revenue)
+    # --- Metrics ---
+    if total_revenue > 0:
+        gross_margin_pct = float(gross_profit / total_revenue)
+        net_margin_pct = float(net_profit / total_revenue)
+        labor_pct = float(total_labor / total_revenue)
     else:
-        labor_pct = 0.0
+        gross_margin_pct = 0.0
         net_margin_pct = 0.0
+        labor_pct = 0.0
         
     # Risks
     risks = RiskFlags(
         negative_cash_flow = net_profit < 0,
-        labor_too_high = labor_pct > 0.45, # Benchmark: >45% is risky for salons
-        margin_too_low = net_margin_pct < 0.10 # Benchmark: <10% is dangerous
+        labor_too_high = labor_pct > 0.45,
+        margin_too_low = net_margin_pct < 0.10
     )
     
     return FinancialSnapshot(
-        daily_revenue=_round(daily_revenue),
-        monthly_revenue=_round(monthly_revenue),
-        daily_labor_cost=_round(daily_labor_cost),
-        monthly_labor_cost=_round(monthly_labor_cost),
+        service_revenue=_round(service_revenue),
+        retail_revenue=_round(retail_revenue),
+        party_revenue=_round(party_revenue),
+        total_revenue=_round(total_revenue),
+        
+        stylist_labor_cost=_round(base_labor),
+        labor_tax_cost=_round(labor_tax),
+        total_labor_cost=_round(total_labor),
+        
+        retail_cogs=_round(retail_cogs),
+        party_cogs=_round(party_cogs),
+        total_cogs=_round(total_cogs),
+        
+        royalties=_round(royalties),
+        cc_fees=_round(cc_fees),
+        ad_fund=_round(ad_fund),
+        total_variable_expenses=_round(total_var_expenses),
+        
         total_monthly_fixed_costs=_round(total_fixed_costs),
         fixed_costs=costs,
-        total_monthly_costs=_round(total_monthly_costs),
-        gross_margin=_round(gross_margin),
+        total_monthly_costs=_round(total_cogs + total_var_expenses + total_fixed_costs),
+        
+        gross_profit=_round(gross_profit),
         net_profit=_round(net_profit),
-        labor_pct_of_revenue=round(labor_pct, 4),
+        
+        gross_profit_margin=round(gross_margin_pct, 4),
         net_profit_margin=round(net_margin_pct, 4),
+        labor_pct_of_sales=round(labor_pct, 4),
+        
         risk_flags=risks
     )
 
