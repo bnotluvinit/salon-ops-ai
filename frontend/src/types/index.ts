@@ -31,6 +31,7 @@ export interface FinancialSnapshot {
     daily_labor_cost: string;
     monthly_labor_cost: string;
     total_monthly_fixed_costs: string;
+    fixed_costs: FixedCosts;
     total_monthly_costs: string;
     gross_margin: string;
     net_profit: string;

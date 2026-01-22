@@ -56,6 +56,7 @@ class FinancialSnapshot(BaseModel):
     daily_labor_cost: Decimal
     monthly_labor_cost: Decimal
     total_monthly_fixed_costs: Decimal
+    fixed_costs: FixedCosts # Individual items for pie chart
     total_monthly_costs: Decimal
     
     # Profits
