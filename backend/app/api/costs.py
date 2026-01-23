@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
 from app.core.db import get_session
 from app.domain.models import FixedCosts
+from app.core.security import get_current_username
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_username)])
 
 @router.get("/costs", response_model=FixedCosts)
 def get_costs(session: Session = Depends(get_session)):
