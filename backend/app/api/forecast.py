@@ -3,9 +3,8 @@ from sqlmodel import Session, select
 from app.core.db import get_session
 from app.domain.models import FixedCosts, OperationalInputs, FinancialSnapshot
 from app.domain.logic import calculate_forecast
-from app.core.security import get_current_username
 
-router = APIRouter(dependencies=[Depends(get_current_username)])
+router = APIRouter()
 
 @router.post("/forecast", response_model=FinancialSnapshot)
 def get_forecast(inputs: OperationalInputs, session: Session = Depends(get_session)):
