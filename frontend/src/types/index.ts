@@ -88,3 +88,40 @@ export interface FinancialSnapshot {
 
     risk_flags: RiskFlags;
 }
+
+// Project Cost Tracking Types
+
+export type CostItemStatus = 'planned' | 'committed' | 'paid';
+
+export interface CostCategory {
+    id?: number;
+    name: string;
+    projected_total: number | string;
+    sort_order: number;
+}
+
+export interface CostItem {
+    id?: number;
+    category_id: number;
+    description: string;
+    vendor: string;
+    amount: number | string;
+    status: CostItemStatus;
+    date: string;
+    notes?: string;
+}
+
+export interface CostCategorySummary {
+    category: CostCategory;
+    actual_total: number | string;
+    variance: number | string;
+    variance_pct: number;
+}
+
+export interface ProjectCostsSummary {
+    total_projected: number | string;
+    total_actual: number | string;
+    remaining_budget: number | string;
+    variance: number | string;
+    categories: CostCategorySummary[];
+}

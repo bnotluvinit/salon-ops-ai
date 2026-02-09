@@ -52,6 +52,30 @@ class FixedCosts(SQLModel, table=True):
             self.software + self.other
         )
 
+class CostCategory(SQLModel, table=True):
+    """
+    Budget categories for project/build-out costs.
+    Each category has a projected budget amount.
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(max_length=200)
+    projected_total: Decimal = Field(default=Decimal("0.00"), decimal_places=2)
+    sort_order: int = Field(default=0)
+
+class CostItem(SQLModel, table=True):
+    """
+    Individual cost items/expenses within a category.
+    Tracks actual expenses against the category budget.
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    category_id: int = Field(foreign_key="costcategory.id")
+    description: str = Field(max_length=500)
+    vendor: str = Field(max_length=200)
+    amount: Decimal = Field(decimal_places=2)
+    status: str = Field(max_length=20)  # planned | committed | paid
+    date: str  # ISO date string
+    notes: Optional[str] = Field(default=None, max_length=1000)
+
 # --- Request/Response Models (Pure Pydantic) ---
 
 class OperationalInputs(BaseModel):
@@ -121,5 +145,24 @@ class FinancialSnapshot(BaseModel):
     
     # Risks
     risk_flags: RiskFlags
+
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
+class CostCategorySummary(BaseModel):
+    """Summary of a cost category with actual totals and variance."""
+    category: CostCategory
+    actual_total: Decimal
+    variance: Decimal  # projected - actual
+    variance_pct: float
+
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
+class ProjectCostsSummary(BaseModel):
+    """Overall project costs summary with category breakdowns."""
+    total_projected: Decimal
+    total_actual: Decimal
+    remaining_budget: Decimal
+    variance: Decimal
+    categories: list[CostCategorySummary]
 
     model_config = ConfigDict(coerce_numbers_to_str=True)
