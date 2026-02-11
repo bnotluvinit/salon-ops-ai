@@ -34,9 +34,11 @@ def update_category(
     if not existing:
         raise HTTPException(status_code=404, detail="Category not found")
     
-    # Update fields
-    category_data = category_in.model_dump(exclude_unset=True, exclude={"id"})
-    existing.sqlmodel_update(category_data)
+    # Explicitly update fields from the input model
+    update_data = category_in.model_dump(exclude_unset=True, exclude={"id"})
+    for key, value in update_data.items():
+        setattr(existing, key, value)
+        
     session.add(existing)
     session.commit()
     session.refresh(existing)
