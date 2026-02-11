@@ -3,6 +3,8 @@ import { api } from '../../api/client';
 import type { ProjectCostsSummary, CostCategory, CostItem } from '../../types';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { ProjectCostPie } from './charts/ProjectCostPie';
+import { ProjectCostSankey } from './charts/ProjectCostSankey';
 
 export const ProjectCostsPage: React.FC = () => {
     const [summary, setSummary] = useState<ProjectCostsSummary | null>(null);
@@ -12,6 +14,8 @@ export const ProjectCostsPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [showAddItem, setShowAddItem] = useState(false);
+    const [showEditCategory, setShowEditCategory] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<CostCategory | null>(null);
     const [newCategory, setNewCategory] = useState({ name: '', projected_total: '' });
     const [newItem, setNewItem] = useState({
         description: '',
@@ -69,6 +73,29 @@ export const ProjectCostsPage: React.FC = () => {
             loadData();
         } catch (error) {
             console.error('Failed to create category:', error);
+        }
+    };
+
+    const handleUpdateCategory = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingCategory || editingCategory.id === undefined) return;
+
+        try {
+            const projectedTotal = typeof editingCategory.projected_total === 'string'
+                ? parseFloat(editingCategory.projected_total)
+                : editingCategory.projected_total;
+
+            await api.updateCategory(editingCategory.id, {
+                ...editingCategory,
+                projected_total: isNaN(projectedTotal) ? 0 : projectedTotal
+            });
+
+            setShowEditCategory(false);
+            setEditingCategory(null);
+            await loadData();
+        } catch (error) {
+            console.error('Failed to update category:', error);
+            alert('Failed to save category. Please try again.');
         }
     };
 
@@ -187,6 +214,18 @@ export const ProjectCostsPage: React.FC = () => {
                 </Card>
             )}
 
+            {/* Visualization Section */}
+            {summary && summary.categories.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <Card title="Budget Usage (%)">
+                        <ProjectCostPie summary={summary} />
+                    </Card>
+                    <Card title="Project Cost Flow">
+                        <ProjectCostSankey summary={summary} />
+                    </Card>
+                </div>
+            )}
+
             {/* Add Category Button */}
             <div className="flex justify-end">
                 <Button onClick={() => setShowAddCategory(true)}>
@@ -213,15 +252,27 @@ export const ProjectCostsPage: React.FC = () => {
                                             <h3 className="text-lg font-semibold text-slate-200">
                                                 {categorySummary.category.name}
                                             </h3>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteCategory(categorySummary.category.id!);
-                                                }}
-                                                className="text-slate-500 hover:text-rose-400 transition-colors text-xs"
-                                            >
-                                                Delete
-                                            </button>
+                                            <div className="flex gap-3">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingCategory(categorySummary.category);
+                                                        setShowEditCategory(true);
+                                                    }}
+                                                    className="text-slate-500 hover:text-indigo-400 transition-colors text-xs"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteCategory(categorySummary.category.id!);
+                                                    }}
+                                                    className="text-slate-500 hover:text-rose-400 transition-colors text-xs"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
                                         </div>
                                         <div className="grid grid-cols-3 gap-4 mt-2 text-sm">
                                             <div>
@@ -439,6 +490,52 @@ export const ProjectCostsPage: React.FC = () => {
                                 </Button>
                                 <Button type="submit">
                                     Add Cost Item
+                                </Button>
+                            </div>
+                        </form>
+                    </Card>
+                </div>
+            )}
+            {/* Edit Category Modal */}
+            {showEditCategory && editingCategory && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+                    <Card title="Edit Cost Category" className="max-w-md w-full shadow-2xl border-slate-700">
+                        <form onSubmit={handleUpdateCategory} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1.5">Category Name</label>
+                                <input
+                                    autoFocus
+                                    type="text"
+                                    required
+                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-inter"
+                                    value={editingCategory.name}
+                                    onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400 mb-1.5">Projected Budget ($)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    required
+                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-inter"
+                                    value={editingCategory.projected_total}
+                                    onChange={(e) => setEditingCategory({ ...editingCategory, projected_total: e.target.value })}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={() => {
+                                        setShowEditCategory(false);
+                                        setEditingCategory(null);
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button type="submit">
+                                    Save Changes
                                 </Button>
                             </div>
                         </form>
