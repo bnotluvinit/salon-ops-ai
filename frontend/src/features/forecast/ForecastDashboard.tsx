@@ -30,8 +30,21 @@ export const ForecastDashboard: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        if (parseFloat(value) < 0) return;
-        setInputs(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
+        const numValue = parseFloat(value);
+        if (numValue < 0) return;
+
+        // Convert percentage fields back to decimals for the state if name ends in _pct
+        const finalValue = name.endsWith('_pct') ? (numValue / 100) : numValue;
+        setInputs(prev => ({ ...prev, [name]: isNaN(finalValue) ? 0 : finalValue }));
+    };
+
+    // Helper to format percentage values for display
+    const formatValue = (name: keyof OperationalInputs) => {
+        const val = inputs[name];
+        if (typeof name === 'string' && name.endsWith('_pct')) {
+            return (Number(val) * 100).toFixed(2);
+        }
+        return val;
     };
 
     const handleCalculate = async () => {
@@ -64,7 +77,7 @@ export const ForecastDashboard: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <Input label="Stylist Hours / day" name="stylist_hours_per_day" type="number" value={inputs.stylist_hours_per_day} onChange={handleChange} />
                             <Input label="Hourly Rate ($)" name="stylist_hourly_rate" type="number" value={inputs.stylist_hourly_rate} onChange={handleChange} />
-                            <Input label="Payroll Tax (%)" name="stylist_payroll_tax_pct" type="number" step="0.01" value={inputs.stylist_payroll_tax_pct} onChange={handleChange} />
+                            <Input label="Payroll Tax (%)" name="stylist_payroll_tax_pct" type="number" step="0.01" value={formatValue('stylist_payroll_tax_pct')} onChange={handleChange} />
                         </div>
                     </div>
 
@@ -73,8 +86,8 @@ export const ForecastDashboard: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <Input label="Retail Sales ($)" name="retail_sales" type="number" value={inputs.retail_sales} onChange={handleChange} />
                             <Input label="Party Sales ($)" name="party_sales" type="number" value={inputs.party_sales} onChange={handleChange} />
-                            <Input label="Royalties (%)" name="royalties_pct" type="number" step="0.01" value={inputs.royalties_pct} onChange={handleChange} />
-                            <Input label="CC Fees (%)" name="cc_fees_pct" type="number" step="0.01" value={inputs.cc_fees_pct} onChange={handleChange} />
+                            <Input label="Royalties (%)" name="royalties_pct" type="number" step="0.01" value={formatValue('royalties_pct')} onChange={handleChange} />
+                            <Input label="CC Fees (%)" name="cc_fees_pct" type="number" step="0.01" value={formatValue('cc_fees_pct')} onChange={handleChange} />
                         </div>
                     </div>
 
